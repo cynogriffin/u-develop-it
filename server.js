@@ -45,14 +45,15 @@ app.delete('/api/candidate/:id', (req, res) => {
 
 // Create a candidate
 app.post('/api/candidate', ({ body }, res) => {
+    // Candidate is allowed not to be affiliated with a party
     const errors = inputCheck(body, 'first_name', 'last_name', 'industry_connected');
     if (errors) {
         res.status(400).json({ error: errors });
         return;
     }
-    const sql = `INSERT INTO candidates (first_name, last_name, industry_connected)
-        VALUES (?,?,?)`;
-    const params = [body.first_name, body.last_name, body.industry_connected];
+    const sql = `INSERT INTO candidates (first_name, last_name, industry_connected, party_id)
+        VALUES (?,?,?,?)`;
+    const params = [body.first_name, body.last_name, body.industry_connected, body.party_id];
 
     db.query(sql, params, (err, result) => {
         if (err) {
@@ -61,7 +62,8 @@ app.post('/api/candidate', ({ body }, res) => {
         }
         res.json({
             message: 'success',
-            data: body
+            data: body,
+            changes: result.affectedRows
         });
     });
 });
@@ -108,8 +110,9 @@ app.get('/api/candidates', (req, res) => {
     });
 });
 
-// update a candidate's party
+// Update a candidate's party
 app.put('/api/candidate/:id', (req, res) => {
+    // Candidate is allowed to not have a party affiliation
     const errors = inputCheck(req.body, 'party_id');
 
     if (errors) {
@@ -139,7 +142,7 @@ app.put('/api/candidate/:id', (req, res) => {
     });
 });
 
-// party routes
+// Get all parties
 app.get('/api/parties', (req, res) => {
     const sql = `SELECT * FROM parties`;
     
@@ -155,6 +158,7 @@ app.get('/api/parties', (req, res) => {
     });
 });
 
+// Get a single party
 app.get('/api/party/:id', (req, res) => {
     const sql = `SELECT * FROM parties WHERE id = ?`;
     const params = [req.params.id];
@@ -171,6 +175,7 @@ app.get('/api/party/:id', (req, res) => {
     });
 });
 
+// Delete a party
 app.delete('/api/party/:id', (req, res) => {
     const sql = `DELETE FROM parties WHERE id = ?`;
     const params = [req.params.id];
